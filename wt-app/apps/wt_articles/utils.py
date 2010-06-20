@@ -1,4 +1,5 @@
 from goopytrans import translate as gtranslate
+from apyrtium import translate as atranslate
 import nltk.data
 
 from django.utils.safestring import SafeUnicode
@@ -6,7 +7,8 @@ from django.utils.safestring import SafeUnicode
 from wt_languages.models import TARGET_LANGUAGE, SOURCE_LANGUAGE, BOTH
 from wt_languages.models import LanguageCompetancy
 from wt_articles.models import SourceArticle, TranslatedArticle
-from wt_articles import GOOGLE,MECHANICAL_TURK,HUMAN,DEFAULT_TRANNY
+from wt_articles import GOOGLE,APERTIUM
+from wt_articles import MECHANICAL_TURK,HUMAN,DEFAULT_TRANNY
 
 class Translator:
     """
@@ -21,6 +23,9 @@ class Translator:
 
 def google_translator():
     return Translator(GOOGLE, gtranslate)
+
+def apertium_translator():
+    return Translator(APERTIUM, atranslate)
 
 def _group_sentences(sentences):
     p_groups = []
@@ -52,27 +57,22 @@ def sentences_as_html(sentences):
     html = _format_sentences(sentences, format_p)
     return html
 
-def user_compatible_source_articles(user):
+def _user_compatible_articles(user, article_model, language_direction):
     profile = user.get_profile()
-    source_languages = set([lc.language for lc in
-                            user.languagecompetancy_set.exclude(translation_options=TARGET_LANGUAGE)])
+    languages = set([lc.language for lc in
+                     user.languagecompetancy_set.exclude(translation_options=language_direction)])
 
-    source_languages.add(profile.native_language)
-    source_languages.add(profile.display_language)
+    languages.add(profile.native_language)
+    languages.add(profile.display_language)
     
-    source_articles = set(SourceArticle.objects.filter(language__in=source_languages))
-    return source_articles
+    articles = set(article_model.objects.filter(language__in=languages))
+    return articles
+
+def user_compatible_source_articles(user):
+    return _user_compatible_articles(user, SourceArticle, TARGET_LANGUAGE)
 
 def user_compatible_target_articles(user):
-    profile = user.get_profile()
-    target_languages = set([lc.language for lc in
-                            user.languagecompetancy_set.exclude(translation_options=SOURCE_LANGUAGE)])
-
-    target_languages.add(profile.native_language)
-    target_languages.add(profile.display_language)
-    
-    target_articles = set(TranslatedArticle.objects.filter(language__in=target_languages))
-    return target_articles
+    return _user_compatible_articles(user, TranslatedArticle, SOURCE_LANGUAGE)
 
 def user_compatible_articles(user):
     source_articles = user_compatible_source_articles(user)
