@@ -1,6 +1,7 @@
 from django.db.transaction import commit_on_success
 from django.core.management.base import BaseCommand
 from django.core.management.color import no_style
+from django.utils.encoding import smart_str
 
 from wt_articles.models import SourceSentence, SourceArticle
 
@@ -15,6 +16,15 @@ try:
     set
 except NameError:
     from sets import Set as set   # Python 2.3 fallback
+
+def unicode_csv_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
+    # Borrowed from Python v.2.6.5 Documentation >> ... >> 13.1 csv
+    # csv.py doesn't do Unicode; encode temporarily as UTF-8:
+    csv_reader = csv.reader(unicode_csv_data,
+                            dialect=dialect, **kwargs)
+    for row in csv_reader:
+        # decode UTF-8 back to Unicode, cell by cell:
+        yield [unicode(cell, 'utf-8') for cell in row]
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -41,7 +51,7 @@ class Command(BaseCommand):
         source_file = options.get('source_file', None)
         error = False
         if not os.path.exists(articles_file):
-            print 'artficles-file does not exist'
+            print 'articles-file does not exist'
             return
         if not os.path.exists(ids_file):
             print 'ids-file does not exist'
@@ -61,7 +71,7 @@ class Command(BaseCommand):
 
     def parse_articles_file(self, articles_file):
         f = open(articles_file, 'r')
-        return f.readlines()
+        return [unicode(title,'utf-8') for title in f.readlines()]
 
     def parse_ids_file(self, ids_file):
         f = open(ids_file, 'r')
@@ -70,7 +80,7 @@ class Command(BaseCommand):
     @commit_on_success
     def parse_source_file(self, source_file, article_id_map):
         f = open(source_file, 'r')
-        csv_reader = csv.reader(f)
+        csv_reader = unicode_csv_reader(f)
         headers = csv_reader.next()
         header_map = {}
         for i,h in enumerate(headers):
@@ -78,58 +88,45 @@ class Command(BaseCommand):
 
         # The headers are uniform in this file
         # lang,(seg_id1,tag1,seg1,img_url1,machine_translation1),...,(seg_idn,...)
-        sa = SourceArticle()
+        sa = None
         cur_aid = -1
         language = None
         segments = ['seg_id%s' % i for i in xrange(1,11)]
-        for line in csv_reader:
+        for i,line in enumerate(csv_reader):
             segment_offsets = [(header_map[seg]) for seg in segments]
             for offs in segment_offsets:
                 try:
                     (aid, seg_id) = line[offs].split('_')
                 except IndexError:
                     # treating this basically like an eof
-
-                    try:
-                        sa.save(manually_splitting=True)
-                    except UnicodeDecodeError:
-                        print 'Argh! Unicode issues (1)...'
-                        sa.delete()
                     break
                 
-                if int(seg_id) == 0:
-                    sa.sentences_processed = True
-                    language = line[0]
-                    try:
-                        self.save_sentence(sa, line[0], aid, article_id_map[aid])
-                    except UnicodeDecodeError:
-                        print 'Argh! Unicode issues...(2)'
-                        sa.delete()
-
+                if cur_aid != int(aid):
+                    if sa:
+                        # save the previous SourceArticle
+                        sa.save(manually_splitting=True)
                     # make a new sa object
                     sa = SourceArticle()
-                sa.save(manually_splitting=True) # get an id
-                #tag = 'tag'
+                    sa.sentences_processed = True
+                    cur_aid = int(aid)
+                    language = line[0]
+                    sa.language = language
+                    sa.doc_id = aid 
+                    sa.timestamp = datetime.now()
+                    sa.title = article_id_map[aid]
+                    sa.save(manually_splitting=True)
+                    # get an id for the SourceArticle instance
+
                 tag = line[(offs + 1)]
-                #seg = 'seg'
                 seg = line[(offs + 2)]
+                
                 ss = SourceSentence()
                 ss.article = sa
                 ss.text = seg
                 ss.segment_id = seg_id
                 ss.end_of_paragraph = re.search("LastSentence", seg) or False
                 ss.save()
-                print '%s :: %s :: %s' % (aid, seg_id, tag)
-            
-        #for line in csv_reader:
-        #    print 'JD : %s' % line
-            
-    def save_sentence(self, sa, language, doc_id, title):
-        sa.source_text = 'Not sure how to handle this yet'
-        sa.language = language
-        sa.doc_id = doc_id 
-        sa.timestamp = datetime.now()
-        sa.title = title
-        sa.save(manually_splitting=True)
-
-        
+                sa.source_text += seg + u'\n'
+                
+        if sa:
+            sa.save(manually_splitting=True)

@@ -12,7 +12,6 @@ from wt_articles.splitting import determine_splitter
 
 from BeautifulSoup import BeautifulSoup
 from datetime import datetime
-from urllib import quote_plus, unquote_plus
 
 # Generic relation to mturk_manager
 from django.contrib.contenttypes import generic
@@ -51,12 +50,10 @@ class SourceArticle(models.Model):
     hits = generic.GenericRelation(TaskItem)
 
     def __unicode__(self):
-        return u"%s :: %s" % (self.title, self.doc_id)
+        return u"%s :: %s :: %s ::\n%s" % (self.id, self.doc_id, self.title, self.source_text)
 
     def save(self, manually_splitting=False):
-        if manually_splitting:
-            print 'woo'
-        else:
+        if not manually_splitting:
             sentences = list()
             segment_id = 0
             soup = BeautifulSoup(self.source_text)
@@ -74,7 +71,6 @@ class SourceArticle(models.Model):
                 s.end_of_paragraph = True
                 s.save()
             self.sentences_processed = True
-        print 'James :: %s' % self
         super(SourceArticle, self).save()
     
     def get_absolute_url(self):
@@ -102,7 +98,10 @@ class SourceSentence(models.Model):
         ordering = ('segment_id','article')
 
     def __unicode__(self):
-        return u"%s" % (self.id)
+        return u"%s :: %s :: %s" % (self.id, self.segment_id, self.text)
+    
+    def save(self):
+        super(SourceSentence, self).save()
 
 class TranslationRequest(models.Model):
     article = models.ForeignKey(SourceArticle)
