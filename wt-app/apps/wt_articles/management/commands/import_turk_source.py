@@ -33,7 +33,7 @@ class Command(BaseCommand):
         make_option('--ids-file', dest='ids_file', 
             help='File containing article ids: hi_articles.ids'),
         make_option('--source-file', dest='source_file',
-            help='The source imput for Amazon: hindi_wikipedia_feature_article_to_translate-2010-02-13T1051.csv'),
+            help='The source input for Amazon: hindi_wikipedia_feature_article_to_translate-2010-02-13T1051.csv'),
     )
     help = 'Installs the named mechanical turk output files in the database.'
     args = "--articles-file <file> --ids-file <file> --source-file <file>"
