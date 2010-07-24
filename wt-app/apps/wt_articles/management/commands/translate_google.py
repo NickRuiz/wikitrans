@@ -23,16 +23,18 @@ class Command(NoArgsCommand):
                                            source=req.article.language,
                                            target=req.target_language)
             for s in req_sentences:
-                translated = t.translate(s.text,
-                                         source=s.article.language,
-                                         target=req.target_language)
+                if not s.text.strip():
+                    translated = s.text
+                else:
+                    translated = t.translate(s.text,
+                                             source=s.article.language,
+                                             target=req.target_language)
                 ts = TranslatedSentence(segment_id=s.segment_id,
                                         source_sentence=s,
                                         text=translated,
                                         translated_by=t.name,
                                         translation_date=datetime.now(),
                                         language=req.target_language,
-                                        best=True,
                                         end_of_paragraph=s.end_of_paragraph)
                 ta_sentences.append(ts)
             ta = TranslatedArticle()
