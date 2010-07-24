@@ -17,6 +17,8 @@ from datetime import datetime
 from django.contrib.contenttypes import generic
 from mturk_manager.models import TaskItem, HITItem, AssignmentItem
 
+from urllib import quote_plus, unquote_plus
+
 if "notification" in settings.INSTALLED_APPS:
     from notification import models as notification
 else:
