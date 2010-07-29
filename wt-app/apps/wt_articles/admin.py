@@ -16,7 +16,7 @@ class SourceArticleAdmin(admin.ModelAdmin):
     search_fields = ('title','language','source_url','source_text',)
 
 class SourceSentenceAdmin(admin.ModelAdmin):
-    list_display = ('article','text','segment_id',)
+    list_display = ('article','text','segment_id','end_of_paragraph',)
     search_fields = ('article','text',)
 
 class TranslatedArticleAdmin(admin.ModelAdmin):

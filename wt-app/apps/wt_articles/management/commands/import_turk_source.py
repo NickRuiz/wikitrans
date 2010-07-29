@@ -49,7 +49,6 @@ class Command(BaseCommand):
         articles_file = options.get('articles_file', None)
         ids_file = options.get('ids_file', None)
         source_file = options.get('source_file', None)
-        error = False
         if not os.path.exists(articles_file):
             print 'articles-file does not exist'
             return
@@ -57,7 +56,7 @@ class Command(BaseCommand):
             print 'ids-file does not exist'
             return
         if not os.path.exists(source_file):
-            print 'source-file-file does not exist'
+            print 'source-file does not exist'
             return
 
         # Generate dictionary of article id => article title
@@ -105,28 +104,48 @@ class Command(BaseCommand):
                     if sa:
                         # save the previous SourceArticle
                         sa.save(manually_splitting=True)
-                    # make a new sa object
-                    sa = SourceArticle()
-                    sa.sentences_processed = True
-                    cur_aid = int(aid)
-                    language = line[0]
-                    sa.language = language
-                    sa.doc_id = aid 
-                    sa.timestamp = datetime.now()
-                    sa.title = article_id_map[aid]
-                    sa.save(manually_splitting=True)
-                    # get an id for the SourceArticle instance
+                    # check if the document is already imported
+                    try:
+                        sa = SourceArticle.objects.filter(language = line[0]).get(doc_id = aid)
+                        sa.sentences_processed = True
+                        cur_aid = int(aid)
+                        language = line[0]
+                        sa.language = language
+                        sa.doc_id = aid 
+                        sa.timestamp = datetime.now()
+                        sa.title = article_id_map[aid]
+                        sa.save(manually_splitting=True)
+                        # get an id for the SourceArticle instance
+                    except SourceArticle.DoesNotExist:
+                        # make a new sa object
+                        sa = SourceArticle()
+                        sa.sentences_processed = True
+                        cur_aid = int(aid)
+                        language = line[0]
+                        sa.language = language
+                        sa.doc_id = aid 
+                        sa.timestamp = datetime.now()
+                        sa.title = article_id_map[aid]
+                        sa.save(manually_splitting=True)
+                        # get an id for the SourceArticle instance
 
                 tag = line[(offs + 1)]
                 seg = line[(offs + 2)]
-                
-                ss = SourceSentence()
-                ss.article = sa
-                ss.text = seg
-                ss.segment_id = seg_id
-                ss.end_of_paragraph = re.search("LastSentence", seg) or False
-                ss.save()
-                sa.source_text += seg + u'\n'
+
+                try:
+                    ss = sa.sourcesentence_set.get(segment_id = seg_id)
+                    ss.text = seg
+                    ss.segment_id = seg_id
+                    ss.end_of_paragraph = re.search("LastSentence", tag) or False
+                    ss.save()
+                except SourceSentence.DoesNotExist:
+                    ss = SourceSentence()
+                    ss.article = sa
+                    ss.text = seg
+                    ss.segment_id = seg_id
+                    ss.end_of_paragraph = re.search("LastSentence", tag) or False
+                    ss.save()
+                    sa.source_text += seg + u'\n'
                 
         if sa:
             sa.save(manually_splitting=True)

@@ -61,7 +61,6 @@ def show_source(request, title, source, aid=None, template_name="wt_articles/sho
 
 def show_translated(request, title, source, target, aid=None, template_name="wt_articles/show_article.html"):
     title = unquote_plus(title)
-    
     if aid != None:
         ta_set = TranslatedArticle.objects.filter(id=aid)
     else:
@@ -72,7 +71,6 @@ def show_translated(request, title, source, target, aid=None, template_name="wt_
         article_text = sentences_as_html(ta_set[0].sentences.all())
     else:
         article_text = None
-    
     return render_to_response(template_name, {
         "title": title,
         "article_text": article_text,
