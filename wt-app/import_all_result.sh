@@ -1,0 +1,9 @@
+#./manage.py import_turk_result --source-lang fa --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Farsi-Batch_191447_result.csv
+./manage.py import_turk_result --source-lang hi --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Hindi-Batch_188107_result.csv
+./manage.py import_turk_result --source-lang hi --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Hindi-Batch_191409_result.csv
+./manage.py import_turk_result --source-lang ja --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Japanese-Batch_191768_result.csv
+./manage.py import_turk_result --source-lang ko --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Korean-Batch_187450_result.csv
+./manage.py import_turk_result --source-lang ko --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Korean-Batch_191315_result.csv 
+./manage.py import_turk_result --source-lang ur --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Urdu-Batch_187410_result.csv
+./manage.py import_turk_result --source-lang ur --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Urdu-Batch_188115_result.csv
+./manage.py import_turk_result --source-lang ur --target-lang en --result-file /Users/bahn/Desktop/wikitrans-system/result\ data\ sets/Urdu-Batch_202996_result.csv

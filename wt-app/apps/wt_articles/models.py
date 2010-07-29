@@ -52,7 +52,7 @@ class SourceArticle(models.Model):
     hits = generic.GenericRelation(TaskItem)
 
     def __unicode__(self):
-        return u"%s :: %s :: %s ::\n%s" % (self.id, self.doc_id, self.title, self.source_text)
+        return u"%s :: %s :: %s" % (self.id, self.doc_id, self.title)
 
     def save(self, manually_splitting=False):
         if not manually_splitting:
@@ -77,7 +77,7 @@ class SourceArticle(models.Model):
     
     def get_absolute_url(self):
         url = '/articles/source/%s/%s/%s' % (self.language,
-                                             quote_plus(self.title),
+                                             quote_plus(self.title.encode('utf-8')),
                                              self.id)
         return iri_to_uri(url)
 
@@ -85,7 +85,7 @@ class SourceArticle(models.Model):
         if lang_string == None:
             lang_string = self.language
         url = '%s/%s/%s' % (lang_string,
-                            quote_plus(self.title),
+                            quote_plus(self.title.encode('utf-8')),
                             self.id)
         return iri_to_uri(url)
     
@@ -168,7 +168,7 @@ class TranslatedArticle(models.Model):
         target_lang = self.language
         lang_pair = "%s-%s" % (source_lang, target_lang)
         url = '/articles/translated/%s/%s/%s' % (lang_pair,
-                                                 quote_plus(self.title),
+                                                 quote_plus(self.title.encode('utf-8')),
                                                  self.id)
         return iri_to_uri(url)
 
@@ -177,7 +177,7 @@ class TranslatedArticle(models.Model):
         target_lang = self.language
         lang_pair = "%s-%s" % (source_lang, target_lang)
         url = '%s/%s/%s' % (lang_pair,
-                            quote_plus(self.title),
+                            quote_plus(self.title.encode('utf-8')),
                             self.id)
         return iri_to_uri(url)
     
