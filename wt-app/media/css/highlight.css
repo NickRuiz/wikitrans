@@ -1,0 +1,14 @@
+.highlight 
+{
+    background-color: yellow;
+}
+
+.active-inline
+{
+    display: block;
+}
+
+.active-inline textarea, .active-inline input[type="text"]
+{
+    width: 100%;
+}
