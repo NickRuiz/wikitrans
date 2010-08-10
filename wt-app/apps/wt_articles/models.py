@@ -20,6 +20,8 @@ from urllib import quote_plus, unquote_plus
 
 from urllib import quote_plus, unquote_plus
 
+import re
+
 if "notification" in settings.INSTALLED_APPS:
     from notification import models as notification
 else:
@@ -57,6 +59,7 @@ class SourceArticle(models.Model):
 
     def save(self, manually_splitting=False):
         if not manually_splitting:
+            # Tokenize the HTML that is fetched from a wiki article
             sentences = list()
             segment_id = 0
             soup = BeautifulSoup(self.source_text)
@@ -64,10 +67,20 @@ class SourceArticle(models.Model):
             # initial save for foriegn key based saves to work
             # save should occur after sent_detector is loaded
             super(SourceArticle, self).save()
+            # find all paragraphs
             for p in soup.findAll('p'):
                 only_p = p.findAll(text=True)
                 p_text = ''.join(only_p)
-                for sentence in sentence_splitter(p_text.strip()):
+                # split all sentences in the paragraph
+                
+                sentences = sentence_splitter(p_text.strip())
+                # TODO: remove bad sentences that were missed above
+                sentences = [s for s in sentences if not re.match("^\**\[\d+\]\**$", s)]
+                    
+                for sentence in sentences:
+                    # Clean up bad spaces (&#160;)
+                    sentence = sentence.replace("&#160;", " ")
+                    
                     s = SourceSentence(article=self, text=sentence, segment_id=segment_id)
                     segment_id += 1
                     s.save()

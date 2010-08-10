@@ -16,6 +16,7 @@ def determine_splitter(language):
             tokenizer = 'tokenizers/punkt/%s.pickle' % (desc_pair[1].lower())
             break
     try:
+        # TODO: Can we save multiple tokenizers in memory to speed the tokenization process?
         tokenizer = nltk.data.load(tokenizer)
         return tokenizer.tokenize
     except:

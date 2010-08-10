@@ -15,7 +15,7 @@ from wt_articles.models import SourceSentence,TranslatedSentence
 from wt_articles.models import FeaturedTranslation, latest_featured_article
 from wt_articles.models import ArticleOfInterest
 from wt_articles.forms import TranslatedSentenceMappingForm,TranslationRequestForm
-from wt_articles.utils import sentences_as_html, target_pairs_by_user
+from wt_articles.utils import sentences_as_html, sentences_as_html_span, target_pairs_by_user
 from wt_articles.utils import user_compatible_articles
 from wt_articles.utils import user_compatible_target_articles
 from wt_articles.utils import user_compatible_source_articles
@@ -50,7 +50,7 @@ def show_source(request, title, source, aid=None, template_name="wt_articles/sho
         sa_set = SourceArticle.objects.filter(language=source,
                                               title=title).order_by('-timestamp')
     if len(sa_set) > 0:
-        article_text = sentences_as_html(sa_set[0].sourcesentence_set.all())
+        article_text = sentences_as_html_span(sa_set[0].sourcesentence_set.all())
     else:
         article_text = None
 

@@ -14,3 +14,17 @@
 	</div>
     
 {% endblock %}
+
+{% block extra_body %}
+    <script type="text/javascript">
+	// Set all spans to be editable and highlightable.
+	var spanLocation = '#featured_translation p span';	
+	$(spanLocation).addClass('highlightable');
+	$(spanLocation).addClass('editable-area');
+    </script>
+    
+    <!-- TODO: How do I put this in site_base.html? I want this to be the last script that
+	runs before the page is loaded, so that any child pages can use the text editing script. -->
+    <!-- jQuery Support Scripts -->
+    <script type="text/javascript" src="{{ STATIC_URL }}pinax/js/textEditing.js"></script>
+{% endblock %}

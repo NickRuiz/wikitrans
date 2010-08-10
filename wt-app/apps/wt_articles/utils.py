@@ -6,7 +6,7 @@ from django.utils.safestring import SafeUnicode
 
 from wt_languages.models import TARGET_LANGUAGE, SOURCE_LANGUAGE, BOTH
 from wt_languages.models import LanguageCompetancy
-from wt_articles.models import SourceArticle, TranslatedArticle
+from wt_articles.models import SourceArticle, SourceSentence, TranslatedArticle, TranslatedSentence
 from wt_articles import GOOGLE,APERTIUM
 from wt_articles import MECHANICAL_TURK,HUMAN,DEFAULT_TRANNY
 
@@ -57,6 +57,15 @@ def sentences_as_html(sentences):
     html = _format_sentences(sentences, format_p)
     return html
 
+def sentences_as_html_span(sentences):
+    format_span = lambda sid, text: u"<span id='ss_%d'>%s</span>" % (sid, text)
+    # span_sentences = [ format_span(s.segment_id, s.text) for s in sentences ]
+    for s in sentences:
+        s.text = format_span(s.segment_id, s.text)
+        
+    html = sentences_as_html(sentences)
+    return html
+
 def _user_compatible_articles(user, article_model, language_direction):
     profile = user.get_profile()
     languages = set([lc.language for lc in
@@ -83,6 +92,9 @@ def user_compatible_articles(user):
 def target_pairs_by_user(user, source):
     target_languages = set([lc.language for lc in
                             user.languagecompetancy_set.exclude(translation_options=SOURCE_LANGUAGE)])
+    # Exclude identical source/target pairs
+    target_languages.discard(source)
+    
     st_pair_builder = lambda t: (t, '%s-%s' % (source, t))
     pairs = map(st_pair_builder, target_languages)
     return pairs
