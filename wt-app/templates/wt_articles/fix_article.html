@@ -1,0 +1,25 @@
+{% extends "wt_articles/articles_base.html" %}
+
+{% load i18n %}
+{% load theme_tags %}
+
+{% block head_title %}{% blocktrans %}Fix Article{% endblocktrans %}{% endblock %}
+
+{% block subbody %}
+<h1>{% block list-title %}{% trans "Fix article" %}{% endblock %}</h1>
+<div id="request_block">
+  <!-- <h2>{{ article.title }}</h2> -->
+  
+  <p>Sometimes the Wikipedia articles have leftover junk when they are extracted from Wikipedia. Please use the form below to fix the sentences.</p>
+  <form class="uniForm" method="POST" action="">
+	<!--<fieldset class="inlineLabels">-->
+	<div class="fulltext">
+	  {{ fix_form }}
+	</div>
+	  {% include "uni_form/uni_form.html" %}
+	<br />
+	<input type="submit" />
+	<!--</fieldset>-->
+  </form>
+</div>
+{% endblock %}
