@@ -2,7 +2,7 @@ from datetime import datetime
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from wt_articles.models import SourceSentence,TranslatedSentence
+from wt_articles.models import SourceArticle, SourceSentence, TranslatedSentence
 from wt_articles.models import TranslatedArticle,ArticleOfInterest
 from wt_articles import DEFAULT_TRANNY
 from django import forms
@@ -26,5 +26,11 @@ class TranslatedSentenceMappingForm(forms.ModelForm):
 class TranslationRequestForm(forms.ModelForm):
     class Meta:
         model = ArticleOfInterest
-
+        
+class FixArticleForm(forms.ModelForm):
+    sentences = forms.CharField(widget=forms.Textarea())
+    
+    class Meta:
+        model = SourceArticle
+        fields = ('title')
 

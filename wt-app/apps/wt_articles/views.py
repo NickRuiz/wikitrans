@@ -14,7 +14,7 @@ from wt_articles.models import SourceArticle,TranslatedArticle
 from wt_articles.models import SourceSentence,TranslatedSentence
 from wt_articles.models import FeaturedTranslation, latest_featured_article
 from wt_articles.models import ArticleOfInterest
-from wt_articles.forms import TranslatedSentenceMappingForm,TranslationRequestForm
+from wt_articles.forms import TranslatedSentenceMappingForm,TranslationRequestForm, FixArticleForm
 from wt_articles.utils import sentences_as_html, sentences_as_html_span, target_pairs_by_user
 from wt_articles.utils import user_compatible_articles
 from wt_articles.utils import user_compatible_target_articles
@@ -90,6 +90,15 @@ def article_search(request, template_name="wt_articles/article_list.html"):
     
 @login_required
 def article_list(request, template_name="wt_articles/article_list.html"):
+    articles = user_compatible_articles(request.user)
+    from django.utils.encoding import smart_unicode
+
+    return render_to_response(template_name, {
+        "articles": articles,
+    }, context_instance=RequestContext(request))
+
+@login_required
+def fix_article_list(request, template_name="wt_articles/fix_article_list.html"):
     articles = user_compatible_articles(request.user)
     from django.utils.encoding import smart_unicode
 
@@ -246,6 +255,43 @@ def translate_post_edit(request, source, target, title, aid, template_name="wt_a
         "title": translated_article.title,
     }, context_instance=RequestContext(request))
     
+
+@login_required
+def fix_article(request, aid, form_class=FixArticleForm, template_name="wt_articles/fix_article.html"):
+    """
+    aid in this context is the source article id
+    """
+    sa_set = SourceArticle.objects.filter(id=aid)
+    if len(sa_set) < 1:
+        no_match = True
+        return render_to_response(template_name,
+                                  {"no_match": True},
+                                  context_instance=RequestContext(request))
+    article = sa_set[0]
+    
+    if request.method == "POST":
+        fix_form = form_class(request.POST, instance=article)
+        
+        if fix_form.is_valid():
+            # TODO: Process the form.
+            article.title = fix_form.cleaned_data['title']
+            lines = fix_form.cleaned_data['sentences']
+            
+            # Convert the textarea of lines to SourceSentences
+            sentences = article.lines_to_sentences(lines)
+            
+            # Delete the old sentences before saving the new ones
+            article.delete_sentences()
+            article.save(manually_splitting=True, source_sentences=sentences)
+            
+            return HttpResponseRedirect(article.get_absolute_url())
+    else:
+        fix_form = form_class(instance=article, initial={'sentences': article.sentences_to_lines()})
+        
+    return render_to_response(template_name, {
+        "article": article,
+        "fix_form": fix_form
+    }, context_instance=RequestContext(request))
 
 @login_required
 def request_translation(request, form_class=TranslationRequestForm, template_name="wt_articles/request_form.html"):

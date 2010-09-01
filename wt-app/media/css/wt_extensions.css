@@ -8,3 +8,9 @@
 .uniForm .blockLabels textarea{ width: 53%; /* <- Required property */ height: 7em; }
 /* Get rid of the 'glow' effect in WebKit, optional */ 
 .uniForm .ctrlHolder textarea:focus{ outline: none; }
+
+.fulltext textarea
+{
+	width: 100%;
+	height: 20em;
+}

@@ -1,24 +1,25 @@
-var highlightClass = 'highlight';
-var highlightableClass = '.highlightable';
-
 var editableClass = 'editable';
 var editableAreaClass = 'editable-area';
 var allEditableClasses = '.' + editableClass + ', .' + editableAreaClass;
 
 var activeEditing = 'active-inline';
 
-// Toggle highlighting for all highlightable classes
-$(highlightableClass).hover(function() {
-    $(this).addClass(highlightClass);
-}, function() {
-    $(this).removeClass(highlightClass);
-});
+function removeElementById(id) {
+    id = '#' + id;
+    $(id).remove();
+}
+
+function triggerBlur(id) {
+    id = '#' + id;
+    $(id).trigger('blur');
+}
 
 // This code is based on the book, "jQuery: Novice to Ninja", ISBN: 9780980576856.
 $(allEditableClasses).click(function(e) {
     // Start the inline editing
     // alert("Object ID " + $(this).attr('id') + " can now be edited!");
     var $editable = $(this);
+    var id = $($editable).attr('id');
     
     // Don't create a edit field if one already exists.
     if ($editable.hasClass(activeEditing)) {
@@ -33,25 +34,51 @@ $(allEditableClasses).click(function(e) {
         
     // Determine what kind of form element we need
     var editElement = $editable.hasClass(editableClass) ?
-            '<input type="text"/>' : '<textarea></textarea>'; 
+            '<input type="text"/>' : '<textarea></textarea>';
             
     // Add a delete button
-    // editElement += '<img src="/media/images/icons/delete.png" />';
+    // TODO: Is there a way to not have to reference the /site_media/static directory directly?
+    // We should be able to use {{ STATIC_URL }} instead. How do we create a Django Template for js?
+    deleteButton = '<br/><input type="image" id="' + id + 
+        '_delete" src="/site_media/static/pinax/images/icons/delete.png" ' +  
+        'class="deleteButton" ' + 
+        'title="Invalid Sentence (Delete)" />';
+        
+    // Add an "accept" button
+    acceptButton = '<input type="image" id="' + id + 
+        '_delete" src="/site_media/static/pinax/images/icons/accept.png" ' +  
+        'class="acceptButton" ' + 
+        'title="Accept Changes" />';
         
     // Replace the target with the form element
     $(editElement)
         .val(contents)
         .appendTo($editable)
-        .focus()
-        .blur(function(e) {
-            // Stop editing if the form is deselected.
-            $editable.trigger('blur');
-        });
+        .focus();
+        //.blur(function(e) {
+            //// Stop editing if the form is deselected.
+            //$editable.trigger('blur');
+        //});
+        
+    $(deleteButton).appendTo($editable);
+    $(acceptButton).appendTo($editable);
+        
+    // Remove the span if the delete button is clicked.
+    $('.deleteButton').click(function() {
+        $editable.remove();
+    });
+    
+    // Accept the changes if the accept button is clicked.
+    $('.acceptButton').click(function() {
+        $editable.trigger('blur');
+    });
+//});
 }).blur(function(e) {
     // End the inline editing
     var $editable = $(this);
     
     var contents = $editable.find(':first-child:input').val();
+    $editable.find(':not(:first-child)').remove();
     $editable
         .contents()
         .replaceWith('<em class="ajax">Saving...</em>');
@@ -72,7 +99,7 @@ $(allEditableClasses).click(function(e) {
     
     // Replace the contents
     $editable
-        .removeClass(activeEditing) 
+        .removeClass(activeEditing)
         .contents()
         .replaceWith(contents);
 });

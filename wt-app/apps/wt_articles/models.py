@@ -57,14 +57,14 @@ class SourceArticle(models.Model):
     def __unicode__(self):
         return u"%s :: %s :: %s" % (self.id, self.doc_id, self.title)
 
-    def save(self, manually_splitting=False):
+    def save(self, manually_splitting=False, source_sentences=()):       
         if not manually_splitting:
             # Tokenize the HTML that is fetched from a wiki article
             sentences = list()
             segment_id = 0
             soup = BeautifulSoup(self.source_text)
             sentence_splitter = determine_splitter(self.language)
-            # initial save for foriegn key based saves to work
+            # initial save for foreign key based saves to work
             # save should occur after sent_detector is loaded
             super(SourceArticle, self).save()
             # find all paragraphs
@@ -87,7 +87,14 @@ class SourceArticle(models.Model):
                 s.end_of_paragraph = True
                 s.save()
             self.sentences_processed = True
+        else:
+            for sentence in source_sentences:
+                sentence.save()
         super(SourceArticle, self).save()
+        
+    def delete_sentences(self):
+        for sentence in self.sourcesentence_set.all():
+            SourceSentence.delete(sentence)
     
     def get_absolute_url(self):
         url = '/articles/source/%s/%s/%s' % (self.language,
@@ -103,6 +110,32 @@ class SourceArticle(models.Model):
                             self.id)
         return iri_to_uri(url)
     
+    def sentences_to_lines(self):
+        lines = []
+        for sentence in self.sourcesentence_set.order_by('segment_id'):
+            text = sentence.text
+            if sentence.end_of_paragraph:
+                text += "\n"
+            lines.append(text)
+                
+        return "\n".join(lines).strip()
+    def lines_to_sentences(self, lines):
+        segment_id = 0
+        source_sentences = []
+        
+        # Get each sentence; mark the last sentence of each paragraph
+        sentences = lines.split("\n")
+        s_count = len(sentences)
+        for i in range(0, s_count):
+            if i > 0 and len(sentences[i].strip()) == 0:
+                source_sentences[segment_id-1].end_of_paragraph = True
+            else:
+                s = SourceSentence(article=self, text=sentences[i], segment_id=segment_id)
+                
+                source_sentences.append(s)
+                segment_id += 1
+                
+        return source_sentences
 
 class SourceSentence(models.Model):
     article = models.ForeignKey(SourceArticle)
